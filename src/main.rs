@@ -51,7 +51,7 @@ fn main() -> io::Result<()> {
     env_logger::init();
     dotenv::dotenv().ok();
 
-    let sys = actix_rt::System::new("wrong-title-set");
+    let sys = actix_rt::System::new("question-box");
 
     let pool = db::init();
 
