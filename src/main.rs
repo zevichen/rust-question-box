@@ -28,13 +28,15 @@ extern crate serde;
 extern crate serde_json;
 extern crate timeago;
 extern crate uuid;
+extern crate reqwest;
+extern crate actix_identity;
 
 use std::{env, io};
 
-use actix_session::CookieSession;
 use actix_web::{App, HttpServer, middleware, web};
 
 use api::*;
+use actix_identity::{IdentityService, CookieIdentityPolicy};
 
 mod api;
 mod share;
@@ -57,10 +59,11 @@ fn main() -> io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .data(pool.clone())
-            .wrap(CookieSession::signed(&[0; 32])
-                .http_only(true)
-                .max_age(SEVEN_DAYS)
-                .secure(false))
+            .wrap(IdentityService::new(
+                // <- create identity middleware
+                CookieIdentityPolicy::new(&[0; 32])    // <- create cookie identity policy
+                    .name("auth-cookie")
+                    .secure(false)))// true.That need to use https request.
             .wrap(middleware::Logger::default())
             .route("/favicon.ico", web::get().to_async(home::favicon))
             .route("/", web::get().to_async(home::index))

@@ -1,23 +1,18 @@
 use actix_http::{Error, http::StatusCode};
-use actix_session::Session;
+use actix_identity::Identity;
 use actix_web::HttpResponse;
 use futures::{Future, future::ok};
 
-const COUNTER: &str = "counter";
+use crate::model::content::ApiResponse;
 
 /// index
-pub fn index( session: Session) -> impl Future<Item=HttpResponse, Error=Error> {
-    // session
-    if let Some(count) = session.get::<i32>(COUNTER).unwrap() {
-        println!("session.counter = {}", count);
-        session.set(COUNTER, 1 + count).unwrap();
+pub fn index(id: Identity) -> impl Future<Item=HttpResponse, Error=Error> {
+    // access request identity
+    if let Some(id) = id.identity() {
+        ok(HttpResponse::Ok().json(ApiResponse { data: format!("Welcome! {}", id), message: "", ..Default::default() }))
     } else {
-        session.set(COUNTER, 1).unwrap();
-    };
-
-    ok(HttpResponse::Ok()
-        .content_type("text/plain")
-        .body("hello"))
+        ok(HttpResponse::Ok().json(ApiResponse { data: "", message: "Welcome Anonymous!", ..Default::default() }))
+    }
 }
 
 /// favicon api

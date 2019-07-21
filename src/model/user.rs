@@ -27,38 +27,23 @@ pub struct UuidSigninUser {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-pub struct NewUser {
-    pub uuid: String,
-    pub nick_name: String,
-    pub union_id: String,
-    pub gmt_modified: String,
-    pub gmt_create: String,
-    pub source: String,
+pub struct NewUser<'a> {
+    pub uuid: &'a str,
+    pub nick_name: &'a str,
+    pub union_id: &'a str,
+    pub gmt_modified: &'a str,
+    pub gmt_create: &'a str,
+    pub source: &'a str,
     pub is_delete: i32,
 }
 
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Default, Deserialize, Serialize, Debug)]
 pub struct UserInfo {
     pub id: u32,
     pub is_login: bool,
-    pub uuid: String,
     pub union_id: String,
     pub icon: String,
     pub nick_name: String,
     pub token: String,
+    pub uuid: String,
 }
-
-impl UserInfo {
-    pub fn new() -> Self {
-        UserInfo {
-            id: 0,
-            is_login: false,
-            uuid: "".to_owned(),
-            union_id: "".to_owned(),
-            icon: "".to_owned(),
-            nick_name: "".to_owned(),
-            token: "".to_owned(),
-        }
-    }
-}
-
