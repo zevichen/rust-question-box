@@ -30,7 +30,6 @@ extern crate timeago;
 extern crate uuid;
 
 use std::{env, io};
-use std::time::Duration;
 
 use actix_session::CookieSession;
 use actix_web::{App, HttpServer, middleware, web};

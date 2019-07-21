@@ -1,16 +1,8 @@
-#[warn(unused_must_use)]
-use futures::Future;
-use hyper::Client;
+extern crate reqwest;
 
 fn main() {
-    let client = Client::new();
+    let body = reqwest::get("https://www.rust-lang.org").expect("request error")
+        .text().expect("text error.");
 
-    let future = client.get("http://httpbin.org/ip".parse().unwrap());
-    println!("1");
-    future.and_then(|res| {
-        println!("{:?}", res);
-        Ok(())
-    }).map_err(|err|{
-        println!("{:?}",err);
-    });
+    println!("body = {:?}", body);
 }
