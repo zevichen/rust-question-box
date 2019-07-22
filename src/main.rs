@@ -30,6 +30,9 @@ extern crate timeago;
 extern crate uuid;
 extern crate reqwest;
 extern crate actix_identity;
+#[warn(dead_code)]
+extern crate jsonwebtoken as jwt;
+use chrono::prelude::*;
 
 use std::{env, io};
 

@@ -4,3 +4,4 @@
 .idea/dataSources/
 .idea/workspace.xml
 Cargo.lock
+.idea

@@ -9,3 +9,4 @@ pub mod question;
 pub mod question_record;
 pub mod user_access;
 pub mod content;
+pub mod token;

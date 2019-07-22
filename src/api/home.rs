@@ -9,9 +9,9 @@ use crate::model::content::ApiResponse;
 pub fn index(id: Identity) -> impl Future<Item=HttpResponse, Error=Error> {
     // access request identity
     if let Some(id) = id.identity() {
-        ok(HttpResponse::Ok().json(ApiResponse { data: format!("Welcome! {}", id), message: "", ..Default::default() }))
+        ok(HttpResponse::Ok().json(ApiResponse { data: format!("Welcome! {}", id), message: "".to_owned(), ..Default::default() }))
     } else {
-        ok(HttpResponse::Ok().json(ApiResponse { data: "", message: "Welcome Anonymous!", ..Default::default() }))
+        ok(HttpResponse::Ok().json(ApiResponse { data: "", message: "Welcome Anonymous!".to_owned(), ..Default::default() }))
     }
 }
 
