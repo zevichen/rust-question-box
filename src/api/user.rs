@@ -14,6 +14,7 @@ use crate::share::common;
 
 type SqlitePool = r2d2::Pool<SqliteConnectionManager>;
 
+//https://docs.rs/actix-identity/0.1.0/actix_identity/
 
 /// login
 pub fn login(item: web::Json<UuidSigninUser>,

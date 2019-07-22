@@ -67,6 +67,8 @@ fn main() -> io::Result<()> {
             .wrap(middleware::Logger::default())
             .route("/favicon.ico", web::get().to_async(home::favicon))
             .route("/", web::get().to_async(home::index))
+            .route("/login", web::get().to_async(home::login))
+            .route("/logout", web::get().to_async(home::logout))
             .service(
                 web::scope("/user")
                     .route("/login", web::post().to_async(user::login))
