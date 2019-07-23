@@ -13,5 +13,12 @@ pub struct ApiResponse<T> {
 
 #[derive(Deserialize, Serialize, Debug, Default)]
 pub struct ApiRequest {
-    pub token: String
+    pub token: String,
+    pub code:String
+}
+
+
+#[derive(Debug, Serialize, Deserialize, Default)]
+pub struct AppState{
+    pub secret:String,
 }

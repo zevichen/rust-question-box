@@ -4,6 +4,8 @@ extern crate uuid;
 
 use rand_core::RngCore;
 use uuid::Uuid;
+use rand::Rng;
+use rand::distributions::Alphanumeric;
 
 fn main() {
     let my_uuid =
@@ -13,4 +15,9 @@ fn main() {
     println!("-------------------");
     let mut rng = rand::thread_rng();
     println!("{}", rng.next_u64());
+    println!("-------------------");
+
+    // 随机字符串
+    let random1 = rng.sample_iter(&Alphanumeric).take(10).collect::<String>();
+    println!("{}", random1);
 }

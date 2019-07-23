@@ -1,5 +1,3 @@
-
-
 /// Our claims struct, it needs to derive `Serialize` and/or `Deserialize`
 /// iss: jwt签发者
 /// sub: jwt所面向的用户
@@ -11,10 +9,11 @@
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct Claims {
     // unionid
-    sub: String,
-    exp: usize,
-    iat:usize,
+    pub sub: String,
+    pub exp: usize,
+    pub iat: usize,
     // #[validate(length(min = "1", max = "1000000"))]
-    union_id:String,
-    secret_key:String,
+    pub union_id: String,
+    pub session_key: String,
+    pub nick_name: String,
 }
