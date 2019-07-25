@@ -38,6 +38,15 @@ fn main() {
 
 }
 
+fn user_info(){
+
+    let my_claims = Claims {
+        sub: "b@b.com".to_owned(),
+        exp: 0,
+    };
+
+}
+
 fn my_demo() {
     let my_claims = Claims {
         sub: "b@b.com".to_owned(),

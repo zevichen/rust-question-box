@@ -1,5 +1,5 @@
 use actix_http::error::BlockingError;
-use actix_web::{Error, HttpRequest, HttpResponse, ResponseError, web};
+use actix_web::{Error, HttpResponse, web};
 use chrono::Local;
 use futures::Future;
 use futures::future::ok;
@@ -19,7 +19,6 @@ type SqlitePool = r2d2::Pool<SqliteConnectionManager>;
 /// 小程序登录
 pub fn code_session(
     item: web::Json<ApiRequest>,
-    req: HttpRequest,
     pool: web::Data<SqlitePool>,
 ) -> impl Future<Item=HttpResponse, Error=Error> {
     web::block(move || {
@@ -34,13 +33,11 @@ pub fn code_session(
             Err(e) => return Err(ApiResponse { code: code::FAILED, message: e.to_string(), ..Default::default() }),
         };
 
-
         let data: Value = response.json().unwrap();
         let errcode = data.get("errcode").unwrap().as_i64().unwrap();
         if errcode != 0 {
             let errmsg = data.get("errmsg").unwrap().as_str().unwrap();
-            let ip = req.head().peer_addr.unwrap().ip().to_string();
-            warn!("MiniAPP code_session errmsg={},ip={}", errmsg, ip);
+            warn!("MiniAPP code_session errmsg={}", errmsg);
             return Err(ApiResponse { code: code::FAILED, message: errmsg.to_owned(), ..Default::default() });
         }
 
@@ -68,7 +65,7 @@ pub fn code_session(
             clamis.sub = row.get_unwrap(0);
             clamis.nick_name = row.get_unwrap(1);
             Ok(())
-        }).expect("select user info error");
+        }).unwrap();
 
         if clamis.sub.is_empty() {
             conn.execute(
@@ -82,8 +79,7 @@ pub fn code_session(
         };
 
         let secret = std::env::var("SECRET").unwrap();
-        let token = jwt::encode(&jwt::Header::default(), &clamis, secret.as_ref())
-            .expect("ecode clamis error");
+        let token = jwt::encode(&jwt::Header::default(), &clamis, secret.as_ref()).unwrap();
 
         Ok(ApiResponse { token, ..Default::default() })
     }).then(|res| match res {
