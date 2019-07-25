@@ -1,3 +1,5 @@
+use actix_web::{Error, HttpResponse, web};
+use actix_web::error::BlockingError;
 use futures::Future;
 use futures::future::ok;
 use jwt::Validation;
@@ -7,7 +9,6 @@ use crate::model::content::{ApiRequest, ApiResponse};
 use crate::model::token::Claims;
 use crate::model::user::UserInfo;
 use crate::share::code;
-use actix_web::{web, HttpResponse, ResponseError, Error};
 
 type SqlitePool = r2d2::Pool<SqliteConnectionManager>;
 
@@ -18,18 +19,15 @@ pub fn info(
     pool: web::Data<SqlitePool>,
 ) -> impl Future<Item=HttpResponse, Error=Error> {
     web::block(move || {
-        let mut user_info: UserInfo = Default::default();
+        let mut user_info = UserInfo::default();
         if item.token.is_empty() {
-            return Err(ApiResponse { code: code::FAILED, message: "token is empty".to_owned(), ..Default::default() });
+            return Err(ApiResponse::fail("token is empty".to_owned(), user_info));
         }
 
-        use jwt::errors::ErrorKind;
-        let token = match jwt::decode::<Claims>(&item.token, "".as_ref(), &Validation::default()) {
+        let jwt_secret = std::env::var("JWT_SECRET").expect("jwt_secret not exist");
+        let token = match jwt::decode::<Claims>(&item.token, jwt_secret.as_ref(), &Validation::default()) {
             Ok(t) => t,
-            Err(e) => match *e.kind() {
-                ErrorKind::ExpiredSignature => return Ok(ApiResponse { code: code::REAUTH, message: "relogin".to_owned(), ..Default::default() }),
-                _ => return Err(ApiResponse { code: code::FAILED, message: e.to_string(), ..Default::default() }),
-            }
+            Err(e) => return Ok(ApiResponse::fail_code(code::REAUTH, e.to_string(), user_info)),
         };
 
         let union_id = token.claims.union_id;
@@ -42,11 +40,14 @@ pub fn info(
             Ok(())
         }).expect("select error.");
 
-        let data = serde_json::to_string(&user_info).expect("serde user_info error.");
-        Ok(ApiResponse { data, ..Default::default() })
+        Ok(ApiResponse::success(user_info))
     }).then(|res| match res {
         Ok(r) => ok(HttpResponse::Ok().json(r)),
-        Err(e) => ok(e.render_response()),
+        Err(e) => match e {
+            BlockingError::Error(e) => ok(HttpResponse::Ok().json(e)),
+            BlockingError::Canceled => ok(HttpResponse::Ok()
+                .json(ApiResponse::fail("system error".to_owned(), UserInfo::default())))
+        },
     })
 }
 

@@ -12,7 +12,7 @@ use crate::model::content::{ApiRequest, ApiResponse};
 use crate::model::token::Claims;
 use crate::share::{code, common};
 
-const SEVEN_DAYS: usize = 7 * 24 * 60 * 60 * 1000;
+const SEVEN_DAYS: usize = 7 * 24 * 60 * 60;
 
 type SqlitePool = r2d2::Pool<SqliteConnectionManager>;
 
@@ -30,7 +30,7 @@ pub fn code_session(
 
         let mut response = match reqwest::get(&url) {
             Ok(r) => r,
-            Err(e) => return Err(ApiResponse { code: code::FAILED, message: e.to_string(), ..Default::default() }),
+            Err(e) => return Err(ApiResponse::fail(e.to_string(), "")),
         };
 
         let data: Value = response.json().unwrap();
@@ -38,13 +38,13 @@ pub fn code_session(
         if errcode != 0 {
             let errmsg = data.get("errmsg").unwrap().as_str().unwrap();
             warn!("MiniAPP code_session errmsg={}", errmsg);
-            return Err(ApiResponse { code: code::FAILED, message: errmsg.to_owned(), ..Default::default() });
+            return Err(ApiResponse::fail(errmsg.to_owned(), ""));
         }
 
         let session_key = data.get("session_key").unwrap().as_str().unwrap();
         let union_id = data.get("unionid").unwrap().as_str().unwrap();
         if session_key.is_empty() || union_id.is_empty() {
-            return Err(ApiResponse { code: code::FAILED, message: "sessionKey or unionId is empty".to_owned(), ..Default::default() });
+            return Err(ApiResponse::fail("sessionKey or unionId is empty".to_owned(), ""));
         }
 
         let rng = rand::thread_rng();
@@ -55,17 +55,18 @@ pub fn code_session(
 
         let conn = pool.get().unwrap();
 
-        let mut clamis: Claims = Default::default();
+        let now_sec = (Local::now().timestamp_millis() / 1000) as usize;
+        let mut clamis = Claims::default();
         clamis.union_id = union_id.to_owned();
-        clamis.exp = SEVEN_DAYS;
-        clamis.iat = Local::now().timestamp_millis() as usize;
+        clamis.exp = now_sec + SEVEN_DAYS;
+        clamis.iat = now_sec;
         clamis.session_key = session_key.to_owned();
 
         conn.query_row("select uuid,nick_name from user where union_id = $1 and is_delete = 0", &[&union_id], |row| {
             clamis.sub = row.get_unwrap(0);
             clamis.nick_name = row.get_unwrap(1);
             Ok(())
-        }).unwrap();
+        }).expect("select user info error");
 
         if clamis.sub.is_empty() {
             conn.execute(
@@ -78,16 +79,16 @@ pub fn code_session(
             clamis.nick_name = nick_name;
         };
 
-        let secret = std::env::var("SECRET").unwrap();
-        let token = jwt::encode(&jwt::Header::default(), &clamis, secret.as_ref()).unwrap();
+        let jwt_secret = std::env::var("JWT_SECRET").unwrap();
+        let token = jwt::encode(&jwt::Header::default(), &clamis, jwt_secret.as_ref()).unwrap();
 
-        Ok(ApiResponse { token, ..Default::default() })
+        Ok(ApiResponse::success(token))
     }).then(|res| match res {
         Ok(r) => ok(HttpResponse::Ok().json(r)),
         Err(e) => match e {
             BlockingError::Error(e) => ok(HttpResponse::Ok().json(e)),
             BlockingError::Canceled => ok(HttpResponse::Ok()
-                .json(ApiResponse { code: code::FAILED, message: "Thread pool is gone".to_owned(), ..Default::default() }))
+                .json(ApiResponse::fail("system error".to_owned(), "")))
         },
     })
 }

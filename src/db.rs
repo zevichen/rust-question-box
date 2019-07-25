@@ -5,7 +5,7 @@ use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 
 pub fn init() -> Pool<SqliteConnectionManager> {
-    let connspec = std::env::var("DATABASE_URL").expect("DATABASE_URL");
+    let connspec = std::env::var("DATABASE_URL").unwrap();
     let manager = SqliteConnectionManager::file(connspec);
     let pool = r2d2::Pool::builder()
         .min_idle(Option::Some(10))

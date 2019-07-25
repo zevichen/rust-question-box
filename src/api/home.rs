@@ -1,5 +1,6 @@
 use actix_http::Error;
 use actix_web::{HttpResponse, web};
+use actix_web::error::BlockingError;
 use futures::{Future, future::ok};
 use r2d2_sqlite::SqliteConnectionManager;
 
@@ -16,23 +17,24 @@ pub fn index(
 ) -> impl Future<Item=HttpResponse, Error=Error> {
     web::block(move || {
         if item.token.is_empty() {
-            return Err(ApiResponse { code: code::FAILED, message: "token is empty".to_owned(), data: "".to_owned(), ..Default::default() });
+            return Err(ApiResponse::fail_code(code::REAUTH, "token is empty".to_owned(),""));
         }
 
         use jwt::errors::ErrorKind;
-        let secret = std::env::var("SECRET").unwrap();
-        let tokenData = match jwt::decode::<Claims>(&item.token, secret.as_ref(), &jwt::Validation::default()) {
+        let jwt_secret = std::env::var("JWT_SECRET").unwrap();
+        let token_data = match jwt::decode::<Claims>(&item.token, jwt_secret.as_ref(), &jwt::Validation::default()) {
             Ok(r) => r,
-            Err(e) => match *e.kind() {
-                ErrorKind::ExpiredSignature => return Ok(ApiResponse { code: code::REAUTH, message: "token has expired".to_owned(), data: "".to_owned(), ..Default::default() }),
-                _ => return Err(ApiResponse { code: code::FAILED, message: e.to_string(), data: "".to_owned(), ..Default::default() }),
-            }
+            Err(e) => return Err(ApiResponse::fail_code(code::REAUTH, e.to_string(),"")),
         };
 
-        Ok(ApiResponse { data: "".to_owned(), ..Default::default() })
+        Ok(ApiResponse::success(token_data.claims.sub))
     }).then(|res| match res {
-        Ok(r) => Ok(HttpResponse::Ok().json(&r)),
-        Err(_) => Ok(HttpResponse::InternalServerError().into()),
+        Ok(r) => ok(HttpResponse::Ok().json(r)),
+        Err(e) => match e {
+            BlockingError::Error(e) => ok(HttpResponse::Ok().json(e)),
+            BlockingError::Canceled => ok(HttpResponse::Ok()
+                .json(ApiResponse::fail("Thread pool is gone".to_owned(),"")))
+        },
     })
 }
 

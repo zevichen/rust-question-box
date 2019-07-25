@@ -19,3 +19,16 @@ pub struct Title {
     pub gmt_modified: NaiveDateTime,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq,Default)]
+#[serde(default)]
+pub struct QuestionForm {
+    pub token: String,
+    pub question_desc: String,
+    pub answer_desc: String,
+    pub degree: String,
+    pub title_type: String,
+    pub subject_id: i32,
+    pub subject_name: String,
+    pub tags: String,
+}
+

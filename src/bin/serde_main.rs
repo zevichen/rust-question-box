@@ -5,6 +5,7 @@ extern crate serde_json;
 
 use serde_json::Value;
 
+// https://serde.rs/attributes.html
 fn main() {
     let post = Post {
         id: Option::Some(1),

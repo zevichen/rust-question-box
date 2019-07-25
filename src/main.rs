@@ -32,8 +32,11 @@ extern crate uuid;
 
 use std::{env, io};
 
-use actix_web::{App, HttpServer, middleware, web};
+use actix_web::{App, HttpResponse, HttpServer, middleware, web};
+
 use api::*;
+
+use crate::model::content::ApiResponse;
 
 mod api;
 mod share;
@@ -50,12 +53,12 @@ fn main() -> io::Result<()> {
     dotenv::dotenv().ok();
 
     let sys = actix_rt::System::new("question-box");
-
     let pool = db::init();
 
     HttpServer::new(move || {
         App::new()
             .data(pool.clone())
+            .data(web::JsonConfig::default().limit(4096))
             .wrap(middleware::Logger::default())
             .route("/favicon.ico", web::get().to_async(home::favicon))
             .route("/", web::get().to_async(home::index))
@@ -64,6 +67,8 @@ fn main() -> io::Result<()> {
                     .route("/auth", web::post().to_async(auth::code_session))
                     .route("/info", web::post().to_async(user::info))
             )
+            .service(web::scope("/question")
+                .route("/uploadImage", web::post().to_async(question::upload_image)))
     }).bind("localhost:8080").unwrap().shutdown_timeout(5)
         .start();
 
