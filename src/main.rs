@@ -15,6 +15,7 @@ extern crate jsonwebtoken as jwt;
 #[macro_use]
 extern crate log;
 extern crate md5;
+extern crate mime;
 extern crate num_cpus;
 extern crate openssl;
 extern crate pulldown_cmark;
@@ -66,9 +67,12 @@ fn main() -> io::Result<()> {
                 web::scope("/user")
                     .route("/auth", web::post().to_async(auth::code_session))
                     .route("/info", web::post().to_async(user::info))
+                    .route("/checkLogin", web::post().to_async(user::is_login))
             )
-            .service(web::scope("/question")
-                .route("/uploadImage", web::post().to_async(question::upload_image)))
+            .service(
+                web::scope("/question")
+                .route("/uploadImage", web::post().to_async(question::upload_image))
+            )
     }).bind("localhost:8080").unwrap().shutdown_timeout(5)
         .start();
 

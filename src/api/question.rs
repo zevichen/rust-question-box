@@ -3,9 +3,12 @@ use std::fs;
 use std::io::Write;
 
 use actix_multipart::{Field, Multipart, MultipartError};
-use actix_web::{error, middleware, web, App, Error, HttpResponse, HttpServer};
-use futures::future::{err, Either};
-use futures::{Future, Stream};
+use actix_web::{App, error, Error, HttpResponse, HttpServer, middleware, web};
+use actix_web::error::BlockingError;
+use futures::{Future, Sink, Stream};
+use futures::future::{Either, err, ok};
+
+use crate::model::content::ApiResponse;
 use crate::model::question::QuestionForm;
 
 //pub fn add_question(
@@ -14,15 +17,11 @@ use crate::model::question::QuestionForm;
 //    _: web::Data<SqlitePool>,
 //) -> impl Future<Item=HttpResponse, Error=Error> {
 //    web::block(move || {
-//
-//
-//        multipart.map_err(error::ErrorInternalServerError)
-//            .map(|field| {
-//                println!("{:?}", field);
-//                Ok(())
-//            }).close()
-//
-//
+////        multipart.map_err(error::ErrorInternalServerError)
+////            .map(|field| {
+////                println!("{:?}", field);
+////                Ok(())
+////            }).close()
 //    }).then(|res| match res {
 //        Ok(r) => ok(HttpResponse::Ok().json(r)),
 //        Err(e) => match e {
@@ -33,7 +32,7 @@ use crate::model::question::QuestionForm;
 //    })
 //}
 
-
+/// upload image
 pub fn upload_image(
     multipart: Multipart,
 ) -> impl Future<Item=HttpResponse, Error=Error> {
@@ -50,9 +49,9 @@ pub fn upload_image(
         })
 }
 
+pub fn save_file(field: Field) -> impl Future<Item=i64, Error=Error> {
 
-pub fn save_file(field: Field) -> impl Future<Item = i64, Error = Error> {
-    let file_path_string = "static/upload.png";
+    let file_path_string = "upload.png";
     let file = match fs::File::create(file_path_string) {
         Ok(file) => file,
         Err(e) => return Either::A(err(error::ErrorInternalServerError(e))),

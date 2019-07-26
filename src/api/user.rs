@@ -51,6 +51,30 @@ pub fn info(
     })
 }
 
+//
+pub fn is_login(
+    item:web::Json<ApiRequest>
+) -> impl Future<HttpResponse,Error> {
+
+    web::block(move || {
+        if item.token.is_empty(){
+            return Err(ApiResponse::fail("unlogin".to_owned(),""));
+        }
+
+        let jwt_secret = std::env::var("JWT_SECRET").unwrap();
+        jwt::decode::<Claims>(&item.token,jwt_secret.as_ref(),&jwt::Validation::default())
+            .map_err(|e| Err(ApiResponse::fail("unlogin".to_owned(),"")))
+            .and_then(|r| ApiResponse::success("logged"))
+    }).then(|res| match res {
+        Ok(r) => ok(HttpResponse::Ok().json(r)),
+        Err(e) => match e {
+            BlockingError::Error(e) => ok(HttpResponse::Ok().json(e)),
+            BlockingError::Canceled => ok(HttpResponse::Ok()
+                .json(ApiResponse::fail("system error".to_owned(), "")))
+        },
+    })
+}
+
 // logout
 //pub fn logout(session: Session) -> impl Future<Item=HttpResponse, Error=Error> {
 //    session.clear();
