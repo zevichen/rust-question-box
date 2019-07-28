@@ -48,8 +48,10 @@ fn main() {
 
 fn user_info() {
     let now_second = (Local::now().timestamp_millis() / 1000) as usize;
+    println!("current time = {}", now_second);
+
     let my_claims = Claims {
-        sub: "12072728699180783153".to_owned(),
+        sub: "3fEUUjxZmujwX9OONDvwit5fQnikrl3d".to_owned(),
         exp: now_second + 7 * 24 * 60 * 60,
         iat: now_second,
         union_id: "fiwjgprgjrepgjhqfoqj".to_owned(),

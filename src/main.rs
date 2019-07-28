@@ -15,7 +15,6 @@ extern crate jsonwebtoken as jwt;
 #[macro_use]
 extern crate log;
 extern crate md5;
-extern crate mime;
 extern crate num_cpus;
 extern crate openssl;
 extern crate pulldown_cmark;
@@ -33,11 +32,9 @@ extern crate uuid;
 
 use std::{env, io};
 
-use actix_web::{App, HttpResponse, HttpServer, middleware, web};
+use actix_web::{App, HttpServer, middleware, web};
 
 use api::*;
-
-use crate::model::content::ApiResponse;
 
 mod api;
 mod share;
@@ -50,6 +47,7 @@ const SEVEN_DAYS: i64 = 7 * 24 * 60 * 60;
 
 fn main() -> io::Result<()> {
     env::set_var("RUST_LOG", "actix_web=debug");
+    env::set_var("RUST_BACKTRACE","full");
     env_logger::init();
     dotenv::dotenv().ok();
 
@@ -71,7 +69,8 @@ fn main() -> io::Result<()> {
             )
             .service(
                 web::scope("/question")
-                .route("/uploadImage", web::post().to_async(question::upload_image))
+                    .route("/uploadImage", web::post().to_async(question::upload_image))
+                    .route("/add", web::post().to_async(question::add_question))
             )
     }).bind("localhost:8080").unwrap().shutdown_timeout(5)
         .start();

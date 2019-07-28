@@ -10,7 +10,7 @@ use serde_json::Value;
 
 use crate::model::content::{ApiRequest, ApiResponse};
 use crate::model::token::Claims;
-use crate::share::{code, common};
+use crate::share::common;
 
 const SEVEN_DAYS: usize = 7 * 24 * 60 * 60;
 
@@ -51,7 +51,7 @@ pub fn code_session(
         let nick_name = rng.sample_iter(&Alphanumeric).take(10).collect::<String>();
         let uuid = rng.sample_iter(&Alphanumeric).take(32).collect::<String>();
 
-        let now = Local::now().format(common::DATE_FORMAT_1).to_string();
+        let now = Local::now().format(common::COMMON_DATA_FORMAT).to_string();
 
         let conn = pool.get().unwrap();
 

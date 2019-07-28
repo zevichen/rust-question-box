@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct User {
-    pub id: i32,
+    pub id: i64,
     pub real_name: String,
     pub user_name: String,
     pub nick_name: String,
@@ -15,7 +15,7 @@ pub struct User {
     pub salt: String,
     pub union_id: String,
     pub source: String,
-    pub is_delete: i32,
+    pub is_delete: i64,
     pub uuid: String,
 }
 
@@ -39,7 +39,7 @@ pub struct NewUser<'a> {
 
 #[derive(Default, Deserialize, Serialize, Debug)]
 pub struct UserInfo {
-    pub id: u32,
+    pub id: i64,
     pub union_id: String,
     pub icon: String,
     pub nick_name: String,

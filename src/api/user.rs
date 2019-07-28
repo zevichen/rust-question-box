@@ -3,14 +3,13 @@ use actix_web::error::BlockingError;
 use futures::Future;
 use futures::future::ok;
 use jwt::Validation;
-use r2d2_sqlite::SqliteConnectionManager;
 
 use crate::model::content::{ApiRequest, ApiResponse};
 use crate::model::token::Claims;
 use crate::model::user::UserInfo;
 use crate::share::code;
+use crate::share::common::SqlitePool;
 
-type SqlitePool = r2d2::Pool<SqliteConnectionManager>;
 
 //https://docs.rs/actix-identity/0.1.0/actix_identity/
 /// user_info
@@ -53,18 +52,20 @@ pub fn info(
 
 //
 pub fn is_login(
-    item:web::Json<ApiRequest>
-) -> impl Future<HttpResponse,Error> {
-
+    item: web::Json<ApiRequest>
+) -> impl Future<Item=HttpResponse, Error=Error> {
     web::block(move || {
-        if item.token.is_empty(){
-            return Err(ApiResponse::fail("unlogin".to_owned(),""));
+        if item.token.is_empty() {
+            return Err(ApiResponse::fail("unlogin".to_owned(), ""));
         }
 
         let jwt_secret = std::env::var("JWT_SECRET").unwrap();
-        jwt::decode::<Claims>(&item.token,jwt_secret.as_ref(),&jwt::Validation::default())
-            .map_err(|e| Err(ApiResponse::fail("unlogin".to_owned(),"")))
-            .and_then(|r| ApiResponse::success("logged"))
+        let result = jwt::decode::<Claims>(&item.token, jwt_secret.as_ref(), &jwt::Validation::default());
+        if result.is_err() {
+            return Err(ApiResponse::fail(result.err().unwrap().to_string(), ""));
+        }
+
+        Ok(ApiResponse::success(result.unwrap().claims.sub))
     }).then(|res| match res {
         Ok(r) => ok(HttpResponse::Ok().json(r)),
         Err(e) => match e {

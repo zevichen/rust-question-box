@@ -2,25 +2,23 @@ use actix_http::Error;
 use actix_web::{HttpResponse, web};
 use actix_web::error::BlockingError;
 use futures::{Future, future::ok};
-use r2d2_sqlite::SqliteConnectionManager;
 
 use crate::model::content::{ApiRequest, ApiResponse};
 use crate::model::token::Claims;
 use crate::share::code;
+use crate::share::common::SqlitePool;
 
-type SqlitePool = r2d2::Pool<SqliteConnectionManager>;
 
 /// index
 pub fn index(
     item: web::Json<ApiRequest>,
-    pool: web::Data<SqlitePool>,
+    _: web::Data<SqlitePool>,
 ) -> impl Future<Item=HttpResponse, Error=Error> {
     web::block(move || {
         if item.token.is_empty() {
             return Err(ApiResponse::fail_code(code::REAUTH, "token is empty".to_owned(),""));
         }
 
-        use jwt::errors::ErrorKind;
         let jwt_secret = std::env::var("JWT_SECRET").unwrap();
         let token_data = match jwt::decode::<Claims>(&item.token, jwt_secret.as_ref(), &jwt::Validation::default()) {
             Ok(r) => r,
