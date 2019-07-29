@@ -47,7 +47,7 @@ const SEVEN_DAYS: i64 = 7 * 24 * 60 * 60;
 
 fn main() -> io::Result<()> {
     env::set_var("RUST_LOG", "actix_web=debug");
-    env::set_var("RUST_BACKTRACE","full");
+    env::set_var("RUST_BACKTRACE", "full");
     env_logger::init();
     dotenv::dotenv().ok();
 
@@ -72,6 +72,7 @@ fn main() -> io::Result<()> {
                     .route("/uploadImage", web::post().to_async(question::upload_image))
                     .route("/add", web::post().to_async(question::add_question))
             )
+            .route("/subject/list", web::get().to_async(subject::subject_list))
     }).bind("localhost:8080").unwrap().shutdown_timeout(5)
         .start();
 
