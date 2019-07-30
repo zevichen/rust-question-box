@@ -1,7 +1,11 @@
 use std::borrow::Borrow;
 
 fn main() {
-    loop_collect();
+
+
+
+
+//    loop_collect();
 }
 
 fn splite_string() {

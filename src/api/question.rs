@@ -42,7 +42,7 @@ pub fn question_info(
                     question_type: row.get_unwrap(7),
                     subject_id: row.get_unwrap(8),
                     subject_name: row.get_unwrap(9),
-                    tags: row.get_unwrap(10),
+                    tags:row.get_unwrap(10),
                     gmt_create: row.get_unwrap(11),
                 })
             }) {

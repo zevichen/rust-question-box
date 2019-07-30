@@ -45,8 +45,6 @@ pub fn collect_info(
         let mut stmt = conn.prepare("select question_id from collect where is_delete = 0 and uuid = $1 \
         order by gmt_create desc limit $2,$3").unwrap();
 
-        println!("sub = {},page_start = {},page_size = {}", token.claims.sub, page_start, page_size);
-
         let sr = stmt.query_map(&[&token.claims.sub, &page_start, &page_size],
             |row| {
                 let question_id: i32 = row.get_unwrap(0);
@@ -64,7 +62,7 @@ pub fn collect_info(
                             question_type: row.get_unwrap(7),
                             subject_id: row.get_unwrap(8),
                             subject_name: row.get_unwrap(9),
-                            tags: row.get_unwrap(10),
+                            tags:row.get_unwrap(10),
                             gmt_create: row.get_unwrap(11),
                         })
                     });
