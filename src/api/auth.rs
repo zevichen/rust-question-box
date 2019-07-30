@@ -71,8 +71,8 @@ pub fn code_session(
         if clamis.sub.is_empty() {
             conn.execute(
                 "insert or replace into user (uuid,nick_name,union_id,gmt_create,gmt_modified,source,is_delete) \
-            values ($1,$2,$3,$4,$5,'WX',0)",
-                &[&uuid, &nick_name, union_id, &now, &now],
+            values ($1,$2,$3,$4,$5,$6,0)",
+                &[&uuid, &nick_name, union_id, &now, &now,common::SOURCE_WECHAT],
             ).expect("insert or replace user info error");
 
             clamis.sub = uuid;

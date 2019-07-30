@@ -1,45 +1,50 @@
-use actix_web::{Error, HttpResponse, web};
+use std::error::Error;
+
+use actix_web::{Error as AWError, HttpResponse, web};
 use actix_web::error::BlockingError;
 use futures::Future;
 use futures::future::ok;
-use jwt::Validation;
 
 use crate::model::content::{ApiRequest, ApiResponse};
 use crate::model::token::Claims;
 use crate::model::user::UserInfo;
 use crate::share::code;
 use crate::share::common::SqlitePool;
-
+use crate::utils::tool;
 
 //https://docs.rs/actix-identity/0.1.0/actix_identity/
 /// user_info
 pub fn info(
     item: web::Json<ApiRequest>,
     pool: web::Data<SqlitePool>,
-) -> impl Future<Item=HttpResponse, Error=Error> {
+) -> impl Future<Item=HttpResponse, Error=AWError> {
     web::block(move || {
-        let mut user_info = UserInfo::default();
+        let default = UserInfo::default();
         if item.token.is_empty() {
-            return Err(ApiResponse::fail("token is empty".to_owned(), user_info));
+            return Err(ApiResponse::fail("token is empty".to_owned(), default));
         }
 
-        let jwt_secret = std::env::var("JWT_SECRET").expect("jwt_secret not exist");
-        let token = match jwt::decode::<Claims>(&item.token, jwt_secret.as_ref(), &Validation::default()) {
+        let token = match tool::jwt_decode(&item.token) {
             Ok(t) => t,
-            Err(e) => return Ok(ApiResponse::fail_code(code::REAUTH, e.to_string(), user_info)),
+            Err(e) => return Ok(ApiResponse::fail_code(code::REAUTH, e.to_string(), default)),
         };
 
         let union_id = token.claims.union_id;
         let conn = pool.get().unwrap();
 
-        conn.query_row("select id,nick_name,mobile,icon from user where union_id = $1 and is_delete = 0 limit 1", &[&union_id], |r| {
-            user_info.id = r.get_unwrap("id");
-            user_info.nick_name = r.get_unwrap("nick_name");
-            user_info.icon = r.get_unwrap("icon");
-            Ok(())
-        }).expect("select error.");
-
-        Ok(ApiResponse::success(user_info))
+        match conn.query_row("select id,uuid,user_name,nick_name,icon from user where union_id = $1 and is_delete = 0 limit 1",
+            &[&union_id], |r|
+                Ok(UserInfo {
+                    id: r.get_unwrap(0),
+                    uuid: r.get_unwrap(1),
+                    user_name: r.get_unwrap(2),
+                    nick_name: r.get_unwrap(3),
+                    icon: r.get_unwrap(4),
+                }),
+        ) {
+            Ok(r) => Ok(ApiResponse::success(r)),
+            Err(e) => Err(ApiResponse::fail(e.description().to_owned(), default))
+        }
     }).then(|res| match res {
         Ok(r) => ok(HttpResponse::Ok().json(r)),
         Err(e) => match e {
@@ -53,7 +58,7 @@ pub fn info(
 //
 pub fn is_login(
     item: web::Json<ApiRequest>
-) -> impl Future<Item=HttpResponse, Error=Error> {
+) -> impl Future<Item=HttpResponse, Error=AWError> {
     web::block(move || {
         if item.token.is_empty() {
             return Err(ApiResponse::fail("unlogin".to_owned(), ""));
@@ -75,9 +80,3 @@ pub fn is_login(
         },
     })
 }
-
-// logout
-//pub fn logout(session: Session) -> impl Future<Item=HttpResponse, Error=Error> {
-//    session.clear();
-//    ok(HttpResponse::Ok().json(ApiResponse { message: "logout".to_owned(), data: "", ..Default::default() }))
-//}

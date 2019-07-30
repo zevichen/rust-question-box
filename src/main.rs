@@ -71,8 +71,13 @@ fn main() -> io::Result<()> {
                 web::scope("/question")
                     .route("/uploadImage", web::post().to_async(question::upload_image))
                     .route("/add", web::post().to_async(question::add_question))
+                    .route("/info", web::post().to_async(question::question_info))
             )
-            .route("/subject/list", web::get().to_async(subject::subject_list))
+            .service(
+                web::scope("/collect")
+                    .route("/add", web::post().to_async(collect::collect_add))
+                    .route("/list", web::post().to_async(collect::collect_info))
+            ).route("/subject/list", web::get().to_async(subject::subject_list))
     }).bind("localhost:8080").unwrap().shutdown_timeout(5)
         .start();
 

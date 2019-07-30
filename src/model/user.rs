@@ -40,9 +40,8 @@ pub struct NewUser<'a> {
 #[derive(Default, Deserialize, Serialize, Debug)]
 pub struct UserInfo {
     pub id: i64,
-    pub union_id: String,
-    pub icon: String,
-    pub nick_name: String,
-    pub token: String,
-    pub uuid: String,
+    pub uuid:String,
+    pub user_name:String,
+    pub nick_name:String,
+    pub icon:String,
 }

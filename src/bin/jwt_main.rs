@@ -51,7 +51,7 @@ fn user_info() {
     println!("current time = {}", now_second);
 
     let my_claims = Claims {
-        sub: "3fEUUjxZmujwX9OONDvwit5fQnikrl3d".to_owned(),
+        sub: "4ssVggUoD2w05ATubtQkiICGOPwu6K7u".to_owned(),
         exp: now_second + 7 * 24 * 60 * 60,
         iat: now_second,
         union_id: "fiwjgprgjrepgjhqfoqj".to_owned(),

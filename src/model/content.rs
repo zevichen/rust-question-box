@@ -3,12 +3,12 @@ use serde::Deserialize;
 #[derive(Deserialize, Serialize, Debug, Default)]
 #[serde(default)]
 pub struct ApiResponse<T> {
-    pub code: u32,
+    pub code: i32,
     pub message: String,
     pub data: T,
-    pub page_num: u32,
-    pub page_size: u32,
-    pub page_total: u32,
+    pub page_index: i32,
+    pub page_size: i32,
+    pub page_total: i32,
     pub token: String,
 }
 
@@ -26,8 +26,8 @@ impl<T> ApiResponse<T> {
             code: 0,
             message: "".to_owned(),
             data,
-            page_num: 0,
-            page_size: 0,
+            page_index: 0,
+            page_size: 10,
             page_total: 0,
             token: "".to_owned(),
         }
@@ -38,20 +38,20 @@ impl<T> ApiResponse<T> {
             code: 1,
             message: msg,
             data,
-            page_num: 0,
-            page_size: 0,
+            page_index: 0,
+            page_size: 10,
             page_total: 0,
             token: "".to_owned(),
         }
     }
 
-    pub fn fail_code(code: u32, msg: String, data: T) -> Self {
+    pub fn fail_code(code: i32, msg: String, data: T) -> Self {
         ApiResponse {
             code,
             message: msg,
             data,
-            page_num: 0,
-            page_size: 0,
+            page_index: 0,
+            page_size: 10,
             page_total: 0,
             token: "".to_string(),
         }
@@ -62,8 +62,8 @@ impl<T> ApiResponse<T> {
             code: 0,
             message: "成功".to_owned(),
             data,
-            page_num: 0,
-            page_size: 0,
+            page_index: 0,
+            page_size: 10,
             page_total: 0,
             token: "".to_string(),
         }

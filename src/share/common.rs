@@ -1,6 +1,6 @@
 use r2d2_sqlite::SqliteConnectionManager;
 
-pub const PAGE_SIZE: i32 = 33;
+pub const PAGE_SIZE: i32 = 10;
 
 pub const COMMON_DATA_FORMAT: &str = "%Y-%m-%d %H:%M:%S";
 

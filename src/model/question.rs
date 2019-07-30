@@ -22,8 +22,9 @@ pub struct Question {
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
 #[serde(default)]
 pub struct QuestionForm {
+    pub question_id: i64,
     pub token: String,
-    pub name:String,
+    pub name: String,
     pub question_image: String,
     pub question_desc: String,
     pub answer_image: String,
@@ -34,4 +35,23 @@ pub struct QuestionForm {
     pub subject_name: String,
     pub tags: String,
 }
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
+#[serde(default)]
+pub struct QuestionInfo {
+    pub id: i64,
+    pub name: String,
+    pub question_image: String,
+    pub question_desc: String,
+    pub answer_image: String,
+    pub answer_desc: String,
+    pub degree: String,
+    pub question_type: String,
+    pub subject_id: i64,
+    pub subject_name: String,
+    pub tags: String,
+    pub gmt_create: String,
+}
+
+
 

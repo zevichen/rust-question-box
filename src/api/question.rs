@@ -2,7 +2,7 @@ use std::fs;
 use std::io::Write;
 
 use actix_multipart::{Field, Multipart, MultipartError};
-use actix_web::{error, Error, HttpResponse, web};
+use actix_web::{error, Error as AWError, HttpResponse, web};
 use actix_web::error::BlockingError;
 use chrono::Local;
 use futures::{Future, Stream};
@@ -11,16 +11,59 @@ use rand::distributions::Alphanumeric;
 use rand::Rng;
 
 use crate::model::content::ApiResponse;
-use crate::model::question::QuestionForm;
+use crate::model::question::{QuestionForm, QuestionInfo};
 use crate::share::{common, common::SqlitePool};
 use crate::share::code;
 use crate::utils::tool;
+use std::error::Error;
+
+pub fn question_info(
+    form: web::Json<QuestionForm>,
+    pool: web::Data<SqlitePool>,
+) -> impl Future<Item=HttpResponse, Error=AWError> {
+    web::block(move || {
+        if form.question_id <= 0 {
+            return Err(ApiResponse::fail("question id is empty".to_owned(), ""));
+        }
+
+        let conn = pool.get().unwrap();
+
+        match conn.query_row("select id,name,question_image,question_desc,answer_image,answer_desc,\
+         degree,question_type,subject_id,subject_name,tags,gmt_create from question where id = $1 and is_delete = 0",
+            &[form.question_id], |row| {
+                Ok(QuestionInfo {
+                    id: row.get_unwrap(0),
+                    name: row.get_unwrap(1),
+                    question_image: row.get_unwrap(2),
+                    question_desc: row.get_unwrap(3),
+                    answer_image: row.get_unwrap(4),
+                    answer_desc: row.get_unwrap(5),
+                    degree: row.get_unwrap(6),
+                    question_type: row.get_unwrap(7),
+                    subject_id: row.get_unwrap(8),
+                    subject_name: row.get_unwrap(9),
+                    tags: row.get_unwrap(10),
+                    gmt_create: row.get_unwrap(11),
+                })
+            }) {
+            Ok(r) => Ok(ApiResponse::success(r)),
+            Err(e) => Err(ApiResponse::fail(e.description().to_owned(), ""))
+        }
+    }).then(|res| match res {
+        Ok(r) => ok(HttpResponse::Ok().json(r)),
+        Err(e) => match e {
+            BlockingError::Error(e) => ok(HttpResponse::Ok().json(e)),
+            BlockingError::Canceled => ok(HttpResponse::Ok()
+                .json(ApiResponse::fail("system error".to_owned(), "")))
+        },
+    })
+}
 
 /// add question
 pub fn add_question(
     form: web::Json<QuestionForm>,
     pool: web::Data<SqlitePool>,
-) -> impl Future<Item=HttpResponse, Error=Error> {
+) -> impl Future<Item=HttpResponse, Error=AWError> {
     web::block(move || {
         if form.token.is_empty() {
             return Err(ApiResponse::fail("token is empty".to_owned(), ""));
@@ -43,7 +86,7 @@ pub fn add_question(
                 let mut stmt = tx.prepare("insert or replace into tag(tag_name,uuid,gmt_create,gmt_modified) values (?,?,?,?)")
                     .expect("tx open stmt failed.");
                 for tag in tags {
-                    if !tag.is_empty(){
+                    if !tag.is_empty() {
                         stmt.execute(&[tag, &claims.sub, &now, &now]).expect("stmt insert or replace failed");
                     }
                 }
@@ -74,7 +117,7 @@ pub fn add_question(
 /// upload image
 pub fn upload_image(
     multipart: Multipart,
-) -> impl Future<Item=HttpResponse, Error=Error> {
+) -> impl Future<Item=HttpResponse, Error=AWError> {
     multipart
         .map_err(error::ErrorInternalServerError)
         .map(|field| save_file(field).into_stream())
@@ -92,7 +135,7 @@ pub fn upload_image(
 }
 
 /// 保存文件
-pub fn save_file(field: Field) -> impl Future<Item=String, Error=Error> {
+pub fn save_file(field: Field) -> impl Future<Item=String, Error=AWError> {
     let mut file_name = rand::thread_rng().sample_iter(&Alphanumeric).take(30).collect::<String>();
     file_name.push_str(".jpg");
     let file_path_string = format!("static/{}", file_name);
