@@ -17,6 +17,7 @@ use crate::share::code;
 use crate::utils::tool;
 use std::error::Error;
 
+/// 用户错题集列表
 pub fn question_list(
     form: web::Json<QuestionForm>,
     pool: web::Data<SqlitePool>,
@@ -47,51 +48,41 @@ pub fn question_list(
 
         let conn = pool.get().unwrap();
         let mut stmt = conn.prepare("select id,name,question_image,question_desc,answer_image,answer_desc,\
-         degree,question_type,subject_id,subject_name,tags,gmt_create from question where id = $1 and is_delete = 0 \
+         degree,question_type,subject_id,subject_name,tags,gmt_create from question where uuid = $1 and is_delete = 0 \
          order by gmt_create desc limit $2,$3").unwrap();
 
-        let sr = stmt.query_map(&[&token.claims.sub, &page_start, &page_size],
+        let result = stmt.query_map(&[&token.claims.sub, &page_start, &page_size],
             |row| {
-                let question_id: i32 = row.get_unwrap(0);
-                let result = conn.query_row("select id,name,question_image,question_desc,answer_image,answer_desc,\
-         degree,question_type,subject_id,subject_name,tags,gmt_create from question where id = $1 and is_delete = 0",
-                    &[question_id], |row| {
-                        Ok(QuestionInfo {
-                            id: row.get_unwrap(0),
-                            name: row.get_unwrap(1),
-                            question_image: row.get_unwrap(2),
-                            question_desc: row.get_unwrap(3),
-                            answer_image: row.get_unwrap(4),
-                            answer_desc: row.get_unwrap(5),
-                            degree: row.get_unwrap(6),
-                            question_type: row.get_unwrap(7),
-                            subject_id: row.get_unwrap(8),
-                            subject_name: row.get_unwrap(9),
-                            tags:row.get_unwrap(10),
-                            gmt_create: row.get_unwrap(11),
-                        })
-                    });
-                result
+                Ok(QuestionInfo {
+                    id: row.get_unwrap(0),
+                    name: row.get_unwrap(1),
+                    question_image: row.get_unwrap(2),
+                    question_desc: row.get_unwrap(3),
+                    answer_image: row.get_unwrap(4),
+                    answer_desc: row.get_unwrap(5),
+                    degree: row.get_unwrap(6),
+                    question_type: row.get_unwrap(7),
+                    subject_id: row.get_unwrap(8),
+                    subject_name: row.get_unwrap(9),
+                    tags: row.get_unwrap(10),
+                    gmt_create: row.get_unwrap(11),
+                })
             })
             .and_then(|mapped_rows| {
                 Ok(mapped_rows.map(|row| row.unwrap()).collect::<Vec<QuestionInfo>>())
             });
 
-        if sr.is_err() {
-            return Err(ApiResponse::fail(sr.err().unwrap().description().to_owned(), Vec::<QuestionInfo>::new()));
+        if result.is_err() {
+            return Err(ApiResponse::fail(result.err().unwrap().description().to_owned(), Vec::<QuestionInfo>::new()));
         }
-
-        response.data = sr.unwrap();
-
-        match conn.query_row("select count(*) from collect where is_delete = 0 and uuid = $1", &[token.claims.sub], |row| {
+        response.data = result.unwrap();
+        match conn.query_row("select count(*) from question where is_delete = 0 and uuid = $1", &[token.claims.sub], |row| {
             response.page_total = row.get_unwrap(0);
             Ok(())
         }) {
             Ok(_) => Ok(response),
             Err(e) => Err(ApiResponse::fail(e.description().to_owned(), Vec::<QuestionInfo>::new())),
         }
-
-
     }).then(|res| match res {
         Ok(r) => ok(HttpResponse::Ok().json(r)),
         Err(e) => match e {

@@ -72,6 +72,7 @@ fn main() -> io::Result<()> {
                     .route("/uploadImage", web::post().to_async(question::upload_image))
                     .route("/add", web::post().to_async(question::add_question))
                     .route("/info", web::post().to_async(question::question_info))
+                    .route("/list", web::post().to_async(question::question_list))
             )
             .service(
                 web::scope("/collect")
