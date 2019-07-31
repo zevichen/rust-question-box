@@ -138,7 +138,7 @@ pub fn upload_image(
 pub fn save_file(field: Field) -> impl Future<Item=String, Error=AWError> {
     let mut file_name = rand::thread_rng().sample_iter(&Alphanumeric).take(30).collect::<String>();
     file_name.push_str(".jpg");
-    let file_path_string = format!("static/{}", file_name);
+    let file_path_string = format!("static/images/default/{}", file_name);
     let file = match fs::File::create(file_path_string) {
         Ok(file) => file,
         Err(e) => return Either::A(err(error::ErrorInternalServerError(e))),
