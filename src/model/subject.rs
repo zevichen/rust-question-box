@@ -1,11 +1,12 @@
 use chrono::NaiveDateTime;
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
+#[serde(default)]
 pub struct Subject {
-    pub id: i32,
+    pub id: i64,
     pub subject_name: String,
-    pub is_delete: i32,
-    pub gmt_create: NaiveDateTime,
-    pub gmt_modified: NaiveDateTime,
+    pub is_delete: i64,
+    pub gmt_create: String,
+    pub gmt_modified: String,
 }
 

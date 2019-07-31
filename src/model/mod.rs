@@ -11,3 +11,4 @@ pub mod user_access;
 pub mod content;
 pub mod token;
 pub mod collect;
+pub mod home;

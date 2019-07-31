@@ -51,7 +51,7 @@ fn user_info() {
     println!("current time = {}", now_second);
 
     let my_claims = Claims {
-        sub: "4ssVggUoD2w05ATubtQkiICGOPwu6K7u".to_owned(),
+        sub: "3fEUUjxZmujwX9OONDvwit5fQnikrl3d".to_owned(),
         exp: now_second + 7 * 24 * 60 * 60,
         iat: now_second,
         union_id: "fiwjgprgjrepgjhqfoqj".to_owned(),
@@ -66,8 +66,8 @@ fn user_info() {
         Err(_) => "".to_owned(),
     };
     // eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjA3MjcyODY5OTE4MDc4MzE1MyIsImV4cCI6MCwiaWF0IjoxNTY0MDM5MTM1MTE4LCJ1bmlvbl9pZCI6ImZpd2pncHJnanJlcGdqaHFmb3FqIiwic2Vzc2lvbl9rZXkiOiJzZXNzaW9uLWtleSIsIm5pY2tfbmFtZSI6InpoYW5nc2FuIn0.RvQdvuBJQ5GR-MRiBLXYxyh91JOYToNo68mQIg07qLc
-    println!("token={}", token);
-
+    println!(r#""token":"{}""#, token);
+    println!("-----------------------------------");
 //    std::thread::sleep(Duration::from_secs(2));
 
     let token_data = decode::<Claims>(&token, secret.as_ref(), &Validation::default()).unwrap();

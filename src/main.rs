@@ -60,7 +60,7 @@ fn main() -> io::Result<()> {
             .data(web::JsonConfig::default().limit(4096))
             .wrap(middleware::Logger::default())
             .route("/favicon.ico", web::get().to_async(home::favicon))
-            .route("/", web::get().to_async(home::index))
+            .route("/", web::post().to_async(home::index))
             .service(
                 web::scope("/user")
                     .route("/auth", web::post().to_async(auth::code_session))
