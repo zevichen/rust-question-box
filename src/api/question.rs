@@ -22,7 +22,7 @@ pub fn question_info(
     pool: web::Data<SqlitePool>,
 ) -> impl Future<Item=HttpResponse, Error=AWError> {
     web::block(move || {
-        if form.question_id <= 0 {
+        if form.question_id <= 0 || form.token.is_empty() || form.name.is_empty() {
             return Err(ApiResponse::fail("question id is empty".to_owned(), ""));
         }
 
@@ -42,7 +42,7 @@ pub fn question_info(
                     question_type: row.get_unwrap(7),
                     subject_id: row.get_unwrap(8),
                     subject_name: row.get_unwrap(9),
-                    tags:row.get_unwrap(10),
+                    tags: row.get_unwrap(10),
                     gmt_create: row.get_unwrap(11),
                 })
             }) {
