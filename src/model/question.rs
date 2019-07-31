@@ -34,6 +34,8 @@ pub struct QuestionForm {
     pub subject_id: String,
     pub subject_name: String,
     pub tags: String,
+    pub page_index:i32,
+    pub page_size:i32
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
