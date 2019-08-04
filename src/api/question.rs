@@ -19,7 +19,7 @@ use std::error::Error;
 
 /// 用户错题集列表
 pub fn question_list(
-    form: web::Json<QuestionForm>,
+    mut form: web::Json<QuestionForm>,
     pool: web::Data<SqlitePool>,
 ) -> impl Future<Item=HttpResponse, Error=AWError> {
     web::block(move || {

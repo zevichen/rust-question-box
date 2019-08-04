@@ -6,7 +6,6 @@ use futures::{Future, future::ok};
 
 use crate::model::content::{ApiRequest, ApiResponse};
 use crate::model::home::{HomeInfo, SubjectInfo};
-use crate::model::token::Claims;
 use crate::share::code;
 use crate::share::common::SqlitePool;
 use crate::utils::tool;

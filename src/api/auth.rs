@@ -1,5 +1,7 @@
+use std::error::Error;
+
 use actix_http::error::BlockingError;
-use actix_web::{Error, HttpResponse, web};
+use actix_web::{Error as AWError, HttpResponse, web};
 use chrono::Local;
 use futures::Future;
 use futures::future::ok;
@@ -10,7 +12,8 @@ use serde_json::Value;
 
 use crate::model::content::{ApiRequest, ApiResponse};
 use crate::model::token::Claims;
-use crate::share::common;
+use crate::share::{code, common};
+use crate::utils::tool::jwt_encode;
 
 const SEVEN_DAYS: usize = 7 * 24 * 60 * 60;
 
@@ -20,7 +23,7 @@ type SqlitePool = r2d2::Pool<SqliteConnectionManager>;
 pub fn code_session(
     item: web::Json<ApiRequest>,
     pool: web::Data<SqlitePool>,
-) -> impl Future<Item=HttpResponse, Error=Error> {
+) -> impl Future<Item=HttpResponse, Error=AWError> {
     web::block(move || {
         let mut url = "https://api.weixin.qq.com/sns/jscode2session".to_string();
         url.push_str("?appid=wx38a0c021af15f58e");
@@ -34,18 +37,23 @@ pub fn code_session(
         };
 
         let data: Value = response.json().unwrap();
-        let errcode = data.get("errcode").unwrap().as_i64().unwrap();
-        if errcode != 0 {
+        println!("{:?}", data);
+
+        let option_open_id = data.get("openid");
+        if option_open_id.is_none() || option_open_id.unwrap().as_str().is_none() {
+            let errcode = data.get("errcode").unwrap().as_i64().unwrap();
             let errmsg = data.get("errmsg").unwrap().as_str().unwrap();
-            warn!("MiniAPP code_session errmsg={}", errmsg);
+
+            warn!("MiniAPP code_session errcode={}, errmsg={}", errcode, errmsg);
             return Err(ApiResponse::fail(errmsg.to_owned(), ""));
-        }
+        };
 
         let session_key = data.get("session_key").unwrap().as_str().unwrap();
-        let union_id = data.get("unionid").unwrap().as_str().unwrap();
+        //这里先用openid代替unionid
+        let union_id = data.get("openid").unwrap().as_str().unwrap();
         if session_key.is_empty() || union_id.is_empty() {
-            return Err(ApiResponse::fail("sessionKey or unionId is empty".to_owned(), ""));
-        }
+            return Err(ApiResponse::fail("sessionKey or openid is empty".to_owned(), ""));
+        };
 
         let rng = rand::thread_rng();
         let nick_name = rng.sample_iter(&Alphanumeric).take(10).collect::<String>();
@@ -66,23 +74,28 @@ pub fn code_session(
             clamis.sub = row.get_unwrap(0);
             clamis.nick_name = row.get_unwrap(1);
             Ok(())
-        }).expect("select user info error");
+        }).ok();
 
         if clamis.sub.is_empty() {
-            conn.execute(
+            let iok = conn.execute(
                 "insert or replace into user (uuid,nick_name,union_id,gmt_create,gmt_modified,source,is_delete) \
             values ($1,$2,$3,$4,$5,$6,0)",
-                &[&uuid, &nick_name, union_id, &now, &now,common::SOURCE_WECHAT],
-            ).expect("insert or replace user info error");
+                &[&uuid, &nick_name, union_id, &now, &now, common::SOURCE_WECHAT],
+            );
+            if iok.is_err() {
+                return Err(ApiResponse::fail(iok.err().unwrap().description().to_owned(), ""));
+            }
 
             clamis.sub = uuid;
             clamis.nick_name = nick_name;
         };
 
-        let jwt_secret = std::env::var("JWT_SECRET").unwrap();
-        let token = jwt::encode(&jwt::Header::default(), &clamis, jwt_secret.as_ref()).unwrap();
-
-        Ok(ApiResponse::success(token))
+        let option_token = jwt_encode(clamis);
+        if option_token.is_err() {
+            Err(ApiResponse::fail(option_token.err().unwrap().description().to_owned(), ""))
+        } else {
+            Ok(ApiResponse::success(option_token.unwrap()))
+        }
     }).then(|res| match res {
         Ok(r) => ok(HttpResponse::Ok().json(r)),
         Err(e) => match e {

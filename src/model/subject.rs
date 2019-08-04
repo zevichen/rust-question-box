@@ -1,5 +1,3 @@
-use chrono::NaiveDateTime;
-
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
 #[serde(default)]
 pub struct Subject {
