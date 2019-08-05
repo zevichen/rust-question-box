@@ -26,17 +26,6 @@ pub struct UuidSigninUser {
     pub session_key: String,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-pub struct NewUser<'a> {
-    pub uuid: &'a str,
-    pub nick_name: &'a str,
-    pub union_id: &'a str,
-    pub gmt_modified: &'a str,
-    pub gmt_create: &'a str,
-    pub source: &'a str,
-    pub is_delete: i32,
-}
-
 #[derive(Default, Deserialize, Serialize, Debug)]
 pub struct UserInfo {
     pub id: i64,

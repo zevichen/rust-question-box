@@ -1,6 +1,6 @@
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq,Default)]
 #[serde(default)]
-pub struct SubjectInfo {
+pub struct HomeSubjectInfo {
     pub id: i64,
     pub subject_name: String,
     pub count: i32,
@@ -9,5 +9,5 @@ pub struct SubjectInfo {
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
 #[serde(default)]
 pub struct HomeInfo {
-    pub subject_infos: Vec<SubjectInfo>
+    pub subject_infos: Vec<HomeSubjectInfo>
 }

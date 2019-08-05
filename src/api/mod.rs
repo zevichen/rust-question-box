@@ -5,3 +5,5 @@ pub mod auth;
 pub mod question;
 pub mod subject;
 pub mod collect;
+pub mod tag;
+pub mod wx_pay;

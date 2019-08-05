@@ -79,6 +79,7 @@ fn main() -> io::Result<()> {
                     .route("/add", web::post().to_async(collect::collect_add))
                     .route("/list", web::post().to_async(collect::collect_info))
             ).route("/subject/list", web::get().to_async(subject::subject_list))
+            .route("/tag/list",web::post().to_async(tag::tag_list))
     }).bind("localhost:8080").unwrap().shutdown_timeout(5)
         .start();
 

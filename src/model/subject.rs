@@ -8,3 +8,10 @@ pub struct Subject {
     pub gmt_modified: String,
 }
 
+#[derive(Debug, Serialize, Deserialize, Default)]
+#[serde(default)]
+pub struct SubjectInfo {
+    pub id: i64,
+    pub subject_name: String,
+}
+

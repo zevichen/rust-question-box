@@ -46,6 +46,14 @@ pub fn question_list(
         response.page_size = form.page_size;
         response.page_index = form.page_index;
 
+//        let mut query_url = "select id,name,question_image,question_desc,answer_image,answer_desc,\
+//        degree,question_type,subject_id,subject_name,tags,gmt_create from question where uuid = $1 and is_delete = 0 ".to_owned();
+//        let mut params = &[&token.claims.sub];
+//
+//        if !form.subject_id.is_empty(){
+//            query_url.push_str("and subject_id = $2");
+//        }
+
         let conn = pool.get().unwrap();
         let mut stmt = conn.prepare("select id,name,question_image,question_desc,answer_image,answer_desc,\
          degree,question_type,subject_id,subject_name,tags,gmt_create from question where uuid = $1 and is_delete = 0 \

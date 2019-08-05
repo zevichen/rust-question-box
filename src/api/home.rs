@@ -5,7 +5,7 @@ use actix_web::error::BlockingError;
 use futures::{Future, future::ok};
 
 use crate::model::content::{ApiRequest, ApiResponse};
-use crate::model::home::{HomeInfo, SubjectInfo};
+use crate::model::home::{HomeInfo, HomeSubjectInfo};
 use crate::share::code;
 use crate::share::common::SqlitePool;
 use crate::utils::tool;
@@ -33,13 +33,13 @@ pub fn index(
         println!("uuid = {}", uuid);
 
         let result = stmt.query_map(&[&uuid], |row| {
-            Ok(SubjectInfo {
+            Ok(HomeSubjectInfo {
                 id: row.get_unwrap(0),
                 subject_name: row.get_unwrap(1),
                 count: row.get_unwrap(2),
             })
         }).and_then(|mapped_rows| {
-            Ok(mapped_rows.map(|row| row.unwrap()).collect::<Vec<SubjectInfo>>())
+            Ok(mapped_rows.map(|row| row.unwrap()).collect::<Vec<HomeSubjectInfo>>())
         });
 
         if result.is_err() {
